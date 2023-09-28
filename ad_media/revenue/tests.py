@@ -57,6 +57,14 @@ class SpendTest(APITestCase):
                                                         date='2023-06-02',
                                                         spend=self.spend4,
                                                         revenue=Decimal(800))
+        self.revenue5 = RevenueStatistic.objects.create(name='1',
+                                                        date='2023-06-03',
+                                                        spend=None,
+                                                        revenue=Decimal(800))
+        self.revenue6 = RevenueStatistic.objects.create(name='1',
+                                                        date='2023-06-03',
+                                                        spend=None,
+                                                        revenue=Decimal(800))
     
     def test_1(self):
         """
@@ -66,10 +74,28 @@ class SpendTest(APITestCase):
         """
         client = APIClient()
         result = client.get('http://127.0.0.1:8000/api/v1/revenue/get_all_revenues/')
+
         target = result.data['result'][0]
         
         expected_spend = (self.spend1.spend+self.spend2.spend).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
         self.assertEqual(target['total_spend'], expected_spend)
         
         expected_revenue = (self.revenue1.revenue+self.revenue2.revenue).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
+        self.assertEqual(target['total_revenue'], expected_revenue)
+        
+    def test_with_spend_None(self):
+        """
+        The test_with_spend_None function tests the case where there is no spend data.
+        The expected result is that the total_spend field should be None, and the total_revenue field should be equal to 
+        the sum of revenue5 and revenue6.
+        """
+        
+        client = APIClient()
+        result = client.get('http://127.0.0.1:8000/api/v1/revenue/get_all_revenues/')
+        target = result.data['result'][1]
+
+        expected_spend = None
+        self.assertEqual(target['total_spend'], expected_spend)
+        
+        expected_revenue = (self.revenue5.revenue+self.revenue6.revenue).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)
         self.assertEqual(target['total_revenue'], expected_revenue)
